@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
 
 /*
 *스레드 : 동시 수행이 가능한 작업 단위
@@ -14,16 +15,24 @@ import android.widget.Button;
 
 -UI를 처리할 때에는 메인 스레드를 사용해야함
 -작업 스레드로 UI를 처리하고 싶을 때에는 핸들러를 사용해야함
+
+*핸들러
+-메시지 큐 : 코드를 순차적으로 수행, 메인 스레드에서 처리할 메시지를 전달하는 역할을 핸들러 클래스가 담당함
  */
 
 public class MainActivity extends AppCompatActivity {
+
     private static final String TAG = "MainActivity";
     int value = 0;
+
+    TextView tv;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        tv = (TextView)findViewById(R.id.tv);
 
         Button btn = (Button)findViewById(R.id.btn);
         btn.setOnClickListener(new View.OnClickListener() {
@@ -44,6 +53,7 @@ public class MainActivity extends AppCompatActivity {
                 }
                 value += 1;
                 Log.d(TAG,  "스레드  값 : " + value);
+                //tv.setText("스레드 값 : " + value);
             }
         }
     }
