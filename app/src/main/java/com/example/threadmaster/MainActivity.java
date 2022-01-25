@@ -5,11 +5,14 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Looper;
 import android.os.Message;
 import android.os.TestLooperManager;
+import android.text.style.EasyEditSpan;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.TextView;
 
 /*
@@ -28,23 +31,46 @@ import android.widget.TextView;
  -> 메시지 객체에 데이터를 넣은 후 sendMessage()로 메시지 큐에 넣음
  -> 메시지 큐에 들어간 메시지는 핸들러가 순차적으로 처리함 -> handleMessage()에 정의한 코드는 메인 스레드에서 실행
 
- */
+*루퍼 : 메시지 큐에 들어오는 메시지를 지속적으로 보면서 하나씩 처리하게함
+-메인 스레드는 UI 객체들을 처리하기 위해 메시지 큐와 루퍼를 사용하지만, 작업 스레드에는 루퍼가 없음
+ -> 순차적으로 작업을 수행하고 싶으면 루퍼 생성 후 실행해야됨
+*/
 
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "MainActivity";
     //int value = 0;
 
-    TextView tv;
+    TextView tv, tv2;
+    EditText edt;
 
     //TestHandler testHandler;
 
     Handler handler = new Handler(); // API 기본 핸들러 객체 생성
 
+    LooperThread looperThread;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        edt = (EditText)findViewById(R.id.edt);
+        tv2 = (TextView)findViewById(R.id.tv2);
+
+        Button btn2 = (Button)findViewById(R.id.btn2);
+        btn2.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                String str = edt.getText().toString();
+                Message msg = Message.obtain(); // 메시지 객체 생성
+                msg.obj = str; // 입력한 문자열을 메시지 객체의 obj에 할당
+
+                looperThread.looperHandler.sendMessage(msg); // 작업 스레드 안에 있는 핸들러로 메시지 객체를 스레드로 전송
+            }
+        });
+
+        looperThread = new LooperThread();
 
         tv = (TextView)findViewById(R.id.tv);
 
@@ -58,6 +84,30 @@ public class MainActivity extends AppCompatActivity {
         });
 
         //testHandler = new TestHandler(); // 핸들러는 메인 스레드에서 싫행
+    }
+
+    class LooperThread extends Thread {
+        LooperHandler looperHandler = new LooperHandler();
+
+        public void run() { // 이 스레드에서는 메시지 객체를 전달 받을 수 있음
+            Looper.prepare(); // 루퍼를 생성
+            Looper.loop(); // 무한 루프를 돌며 메시지 큐에 쌓인 메시지나 러너블 객체를 핸들러에 전달함
+        }
+
+        class LooperHandler extends Handler {
+            @Override
+            public void handleMessage(@NonNull Message msg) {
+                final String getStr = "루퍼를 이용한 스레드 : " + msg.obj; // 작업 스레드 안에서 전달 받은 메시지 처리
+
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        tv2.setText(getStr);
+                    }
+                });
+                super.handleMessage(msg);
+            }
+        }
     }
 
     class ThreadTest extends Thread {
