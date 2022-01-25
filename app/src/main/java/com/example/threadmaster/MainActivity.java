@@ -120,7 +120,8 @@ public class MainActivity extends AppCompatActivity {
         //testHandler = new TestHandler(); // 핸들러는 메인 스레드에서 싫행
     }
 
-    class ProgressTask extends AsyncTask<Integer, Integer, Integer> {
+    class ProgressTask extends AsyncTask<Integer, Integer, Integer> { // 이 Integer들은 AsyncTask 클래스를 상속하면서 오버라이드할 새로운 클래스의
+        // 메소드가 어떤 타입의 파라미터를 가질 것인지를 알려줌
 
         @Override
         protected void onPreExecute() { // 초기화
@@ -131,7 +132,7 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         protected Integer doInBackground(Integer... integers) {
-            while(isCancelled() == false) {
+            while(isCancelled() == false) { // 진행중이면
                 value++;
                 if(value >= 100) {
                     break;
