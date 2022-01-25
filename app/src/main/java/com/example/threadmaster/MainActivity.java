@@ -3,6 +3,7 @@ package com.example.threadmaster;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -13,6 +14,7 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 /*
@@ -34,6 +36,13 @@ import android.widget.TextView;
 *루퍼 : 메시지 큐에 들어오는 메시지를 지속적으로 보면서 하나씩 처리하게함
 -메인 스레드는 UI 객체들을 처리하기 위해 메시지 큐와 루퍼를 사용하지만, 작업 스레드에는 루퍼가 없음
  -> 순차적으로 작업을 수행하고 싶으면 루퍼 생성 후 실행해야됨
+
+*AsyncTask의 장점 : 코드 간소화(클래스 안에 스레드 코드와 UI 접근 코드를 한꺼번에 넣을 수 있음)
+
+-doInBackground() : 작업 스레드에서 수행, execute()를 호출할 때 사용된 파라미터를 배열로 전달 받음
+-onPreExecute() : 메인 스레드에서 수행, 백그라운드 작업 수행 전에 호출됨, 초기화 작업에 사용됨
+-onProgressUpdate() : 메인 스레드에서 수행, 백그라운드 진행 상태를 표시함, 작업 중간마다 UI 객체에 접근하는 경우에 사용됨
+-onPostExecute() : 메인 스레드에서 수행, 백그라운드 작업이 끝난 후에 호출됨, 메모리 리소스를 해제하는 작업에 사용됨
 */
 
 public class MainActivity extends AppCompatActivity {
@@ -50,10 +59,35 @@ public class MainActivity extends AppCompatActivity {
 
     LooperThread looperThread;
 
+    ProgressBar progressBar;
+
+    ProgressTask progressTask;
+
+    int value;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        progressBar = findViewById(R.id.progressbar);
+
+        Button btn3 = (Button)findViewById(R.id.btn3);
+        btn3.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                // 태스크 객체 생성 후 실행하기
+                progressTask = new ProgressTask();
+                progressTask.execute();
+            }
+        });
+        Button btn4 = (Button)findViewById(R.id.btn4);
+        btn4.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                progressTask.cancel(true);
+            }
+        });
 
         edt = (EditText)findViewById(R.id.edt);
         tv2 = (TextView)findViewById(R.id.tv2);
@@ -84,6 +118,48 @@ public class MainActivity extends AppCompatActivity {
         });
 
         //testHandler = new TestHandler(); // 핸들러는 메인 스레드에서 싫행
+    }
+
+    class ProgressTask extends AsyncTask<Integer, Integer, Integer> {
+
+        @Override
+        protected void onPreExecute() { // 초기화
+            super.onPreExecute();
+            value = 0;
+            progressBar.setProgress(value);
+        }
+
+        @Override
+        protected Integer doInBackground(Integer... integers) {
+            while(isCancelled() == false) {
+                value++;
+                if(value >= 100) {
+                    break;
+                } else {
+                    publishProgress(value); // 100이 넘지 않으면 -> 진행중이면 호출됨
+                }
+
+                try {
+                        Thread.sleep(1000);
+                    } catch (Exception e) {}
+                }
+            return value;
+        }
+
+        @Override
+        protected void onProgressUpdate(Integer... values) { // 중간중간 UI 업데이트
+            progressBar.setProgress(values[0].intValue());
+        }
+
+        @Override
+        protected void onPostExecute(Integer integer) { // doInBackground() 결과값 전달 받음(완료 상태)
+            progressBar.setProgress(0);
+        }
+
+        @Override
+        protected void onCancelled() {
+            progressBar.setProgress(0);
+        }
     }
 
     class LooperThread extends Thread {
