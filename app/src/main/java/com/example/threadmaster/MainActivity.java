@@ -27,6 +27,7 @@ import android.widget.TextView;
  -> 핸들러가 관리하는 메시지 큐에서 처리할 수 있는 메시지 객체를 참조함(obtainMessage()) -> 메시지 객체를 반환받음
  -> 메시지 객체에 데이터를 넣은 후 sendMessage()로 메시지 큐에 넣음
  -> 메시지 큐에 들어간 메시지는 핸들러가 순차적으로 처리함 -> handleMessage()에 정의한 코드는 메인 스레드에서 실행
+
  */
 
 public class MainActivity extends AppCompatActivity {
@@ -36,7 +37,9 @@ public class MainActivity extends AppCompatActivity {
 
     TextView tv;
 
-    TestHandler testHandler;
+    //TestHandler testHandler;
+
+    Handler handler = new Handler(); // API 기본 핸들러 객체 생성
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,7 +57,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        testHandler = new TestHandler(); // 핸들러는 메인 스레드에서 싫행
+        //testHandler = new TestHandler(); // 핸들러는 메인 스레드에서 싫행
     }
 
     class ThreadTest extends Thread {
@@ -70,12 +73,21 @@ public class MainActivity extends AppCompatActivity {
                 Log.d(TAG,  "스레드  값 : " + value);
                 //tv.setText("스레드 값 : " + value);
 
+                /*
                 Message message = testHandler.obtainMessage(); // 메시지 객체 참조 -> 메시지 객체 반환 받음
                 Bundle bundle = new Bundle();
                 bundle.putInt("value", value);
                 message.setData(bundle); // 메시지 객체에 데이터를 넣음
 
                 testHandler.sendMessage(message); // 메시지 객체를 핸들러를 이용해서 메시지 큐에 넣음
+                 */
+
+                handler.post(new Runnable() { // 러너블 객체를 핸들러의 post()로 전달해주면 이 객체에 전달된 run() 안의 코드들은 메인 스레드에서 실행됨
+                    @Override
+                    public void run() {
+                        tv.setText("핸들러를 이용한 스레드 값 : " + value); // 핸들러 내부 메인 스레드에서 실행
+                    }
+                });
             }
         }
     }
