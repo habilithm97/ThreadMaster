@@ -3,6 +3,9 @@ package com.example.threadmaster;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.res.Resources;
+import android.graphics.drawable.Animatable;
+import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
@@ -14,8 +17,11 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+
+import java.util.ArrayList;
 
 /*
 *스레드 : 동시 수행이 가능한 작업 단위
@@ -65,10 +71,43 @@ public class MainActivity extends AppCompatActivity {
 
     int value;
 
+    ImageView img;
+
+    ArrayList<Drawable> drawableArrayList = new ArrayList<Drawable>();
+
+    AniThread aniThread;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        Resources res = getResources();
+        drawableArrayList.add(res.getDrawable(R.drawable.dice1));
+        drawableArrayList.add(res.getDrawable(R.drawable.dice2));
+        drawableArrayList.add(res.getDrawable(R.drawable.dice3));
+        drawableArrayList.add(res.getDrawable(R.drawable.dice4));
+        drawableArrayList.add(res.getDrawable(R.drawable.dice5));
+        drawableArrayList.add(res.getDrawable(R.drawable.dice6));
+
+        img = findViewById(R.id.img);
+
+        Button btn5 = (Button)findViewById(R.id.btn5);
+        btn5.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                aniThread = new AniThread();
+                aniThread.start();
+            }
+        });
+
+        Button btn6 = (Button)findViewById(R.id.btn6);
+        btn6.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                // 주사위 멈추기 -> AsyncTask의 cancel() 메소드로 멈추기
+            }
+        });
 
         progressBar = findViewById(R.id.progressbar);
 
@@ -118,6 +157,32 @@ public class MainActivity extends AppCompatActivity {
         });
 
         //testHandler = new TestHandler(); // 핸들러는 메인 스레드에서 싫행
+    }
+
+    class AniThread extends  Thread {
+        @Override
+        public void run() {
+            int index = 0;
+            for(int i = 0; i < 999999999; i++) {
+                final Drawable drawable = drawableArrayList.get(index);
+                index += 1;
+                if(index > 5) {
+                    index = 0;
+                }
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        img.setImageDrawable(drawable);
+                    }
+                });
+                try {
+                    Thread.sleep(10) ;
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+            super.run();
+        }
     }
 
     class ProgressTask extends AsyncTask<Integer, Integer, Integer> { // 이 Integer들은 AsyncTask 클래스를 상속하면서 오버라이드할 새로운 클래스의
