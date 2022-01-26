@@ -4,15 +4,12 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
 import android.content.res.Resources;
-import android.graphics.drawable.Animatable;
 import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
-import android.os.TestLooperManager;
-import android.text.style.EasyEditSpan;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -76,6 +73,9 @@ public class MainActivity extends AppCompatActivity {
     ArrayList<Drawable> drawableArrayList = new ArrayList<Drawable>();
 
     AniThread aniThread;
+    AniTask aniTask;
+
+    int index;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -96,8 +96,10 @@ public class MainActivity extends AppCompatActivity {
         btn5.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                aniThread = new AniThread();
-                aniThread.start();
+                //aniThread = new AniThread();
+                //aniThread.start();
+                aniTask = new AniTask();
+                aniTask.execute();
             }
         });
 
@@ -105,7 +107,7 @@ public class MainActivity extends AppCompatActivity {
         btn6.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                // 주사위 멈추기 -> AsyncTask의 cancel() 메소드로 멈추기
+                aniTask.cancel(true); // 주사위 멈추기 -> AsyncTask의 cancel() 메소드로 멈추기
             }
         });
 
@@ -163,7 +165,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void run() {
             int index = 0;
-            for(int i = 0; i < 999999999; i++) {
+            for(int i = 0; i < 99999999; i++) {
                 final Drawable drawable = drawableArrayList.get(index);
                 index += 1;
                 if(index > 5) {
@@ -182,6 +184,58 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
             super.run();
+        }
+    }
+
+    class AniTask extends AsyncTask<Integer, Integer, Integer> {
+
+        @Override
+        protected void onPreExecute() {
+            super.onPreExecute();
+            index = 0;
+            final Drawable drawable = drawableArrayList.get(index);
+            img.setImageDrawable(drawable);
+        }
+
+        @Override
+        protected Integer doInBackground(Integer... integers) {
+            while(isCancelled() == false) { // 진행중이면
+                index++; // 주사위 값을 하나씩 증가
+                if(index > 5) { // 마지막 주사위보다 커지면
+                    index = 0; // 다시 처음으로
+                } else {
+                    publishProgress(index); // 진행중이면 호출됨
+                }
+
+                try {
+                    Thread.sleep(1000);
+                } catch (Exception e) {}
+            }
+            return index;
+        }
+
+        @Override
+        protected void onProgressUpdate(Integer... integers) {
+            final Drawable drawable = drawableArrayList.get(index);
+            index++;
+            handler.post(new Runnable() {
+                @Override
+                public void run() {
+                    img.setImageDrawable(drawable);
+                }
+            });
+        }
+
+        @Override
+        protected void onPostExecute(Integer integer) {
+            final Drawable drawable = drawableArrayList.get(index);
+            img.setImageDrawable(drawable);
+        }
+
+        @Override
+        protected void onCancelled() {
+            final Drawable drawable = drawableArrayList.get(index);
+            img.setImageDrawable(drawable);
         }
     }
 
