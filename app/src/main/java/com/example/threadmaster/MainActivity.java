@@ -200,7 +200,6 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected Integer doInBackground(Integer... integers) {
             while(isCancelled() == false) { // 진행중이면
-                index++; // 주사위 값을 하나씩 증가
                 if(index > 5) { // 마지막 주사위보다 커지면
                     index = 0; // 다시 처음으로
                 } else {
@@ -208,7 +207,7 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 try {
-                    Thread.sleep(1000);
+                    Thread.sleep(10);
                 } catch (Exception e) {}
             }
             return index;
@@ -217,7 +216,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected void onProgressUpdate(Integer... integers) {
             final Drawable drawable = drawableArrayList.get(index);
-            index++;
+            index++; // 주사위 값을 하나씩 증가
             handler.post(new Runnable() {
                 @Override
                 public void run() {
@@ -233,7 +232,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         @Override
-        protected void onCancelled() {
+        protected void onCancelled() {  //   java.lang.IndexOutOfBoundsException: Index: 6, Size: 6 에러 발생
             final Drawable drawable = drawableArrayList.get(index);
             img.setImageDrawable(drawable);
         }
